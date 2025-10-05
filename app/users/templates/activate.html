@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activar Cuenta - Sistema de Catering</title>
+    <link rel="stylesheet" href="/static/activate.css">
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <div class="header">
+                <h1>🍽️ Sistema de Catering</h1>
+                <h2>Activar tu Cuenta</h2>
+            </div>
+
+            <div id="userInfo" class="user-info" style="display: none;">
+                <p>Hola <strong id="userName"></strong></p>
+                <p class="email-info">Email: <span id="userEmail"></span></p>
+            </div>
+
+            <form id="activateForm" style="display: none;">
+                <div class="form-group">
+                    <label for="employeeId">ID de Empleado *</label>
+                    <input type="text" id="employeeId" required placeholder="Ej: EMP00001">
+                    <small>Ingresa el ID que te proporcionó RRHH</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Contraseña *</label>
+                    <input type="password" id="password" required>
+                    <div class="password-requirements">
+                        <small>La contraseña debe contener:</small>
+                        <ul>
+                            <li id="req-length">✗ Mínimo 8 caracteres</li>
+                            <li id="req-upper">✗ Al menos una mayúscula</li>
+                            <li id="req-lower">✗ Al menos una minúscula</li>
+                            <li id="req-number">✗ Al menos un número</li>
+                            <li id="req-special">✗ Al menos un carácter especial (!@#$%^&*)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="passwordConfirmation">Confirmar Contraseña *</label>
+                    <input type="password" id="passwordConfirmation" required>
+                    <small id="password-match" style="display: none;"></small>
+                </div>
+
+                <div class="form-group">
+                    <label for="personalEmail">Email Personal *</label>
+                    <input type="email" id="personalEmail" required placeholder="tu-email@gmail.com">
+                    <small>Para comunicaciones personales</small>
+                </div>
+
+                <div class="form-group checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="checkbox" id="consent" required>
+                        <span>Acepto el <a href="#" target="_blank">tratamiento de mis datos personales</a> *</span>
+                    </label>
+                </div>
+
+                <button type="submit" class="btn-primary">Activar Cuenta</button>
+            </form>
+
+            <div id="errorMessage" class="error" style="display: none;"></div>
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Activando cuenta...</p>
+            </div>
+            <div id="tokenError" class="error" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="/static/activate.js"></script>
+</body>
+</html>

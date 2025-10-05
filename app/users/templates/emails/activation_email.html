@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activa tu cuenta</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            color: #2c3e50;
+            margin: 0;
+        }
+        .content {
+            background-color: white;
+            padding: 25px;
+            border-radius: 8px;
+        }
+        .info-box {
+            background-color: #e8f5e9;
+            border-left: 4px solid #27ae60;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Sistema de Catering</h1>
+        </div>
+        <div class="success-icon">✅</div>
+        <div class="content">
+            <h2>¡Hola {{ user_name }}!</h2>
+            <h3 style="color: #27ae60;">¡Tu cuenta ha sido activada exitosamente!</h3>
+
+            <p>Ya puedes iniciar sesión en la aplicación móvil del Sistema de Catering
+            con tu email y la contraseña que configuraste.</p>
+
+            <div class="info-box">
+                <strong>📱 Próximos pasos:</strong>
+                <ol style="margin: 10px 0 0 0;">
+                    <li>Descarga la aplicación móvil (si aún no lo has hecho)</li>
+                    <li>Inicia sesión con tu email corporativo</li>
+                    <li>Explora las funcionalidades según tu rol</li>
+                </ol>
+            </div>
+
+            <p>Si tienes alguna duda o problema, contacta con el departamento de RRHH.</p>
+
+            <p style="margin-top: 30px;">¡Bienvenido al equipo!</p>
+        </div>
+        <div class="footer">
+            <p>Este es un mensaje automático, por favor no respondas a este email.</p>
+            <p>&copy; 2025 Sistema de Catering. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
+"""8px;
+        }
+        .button {
+            display: inline-block;
+            padding: 15px 30px;
+            background-color: #3498db;
+            color: white !important;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #2980b9;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.9em;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Sistema de Catering</h1>
+        </div>
+        <div class="content">
+            <h2>¡Hola {{ user_name }}!</h2>
+            <p>Tu cuenta ha sido creada en nuestro Sistema de Catering.</p>
+            <p>Para activar tu cuenta y comenzar a usar la aplicación, haz clic en el siguiente botón:</p>
+
+            <center>
+                <a href="{{ activation_link }}" class="button">
+                    Activar mi cuenta
+                </a>
+            </center>
+
+            <div class="warning">
+                <strong>⚠️ Importante:</strong> Este enlace expirará en <strong>{{ expires_in_hours }} horas</strong>
+                y solo puede usarse una vez.
+            </div>
+
+            <p>Al activar tu cuenta, necesitarás:</p>
+            <ul>
+                <li>Crear una contraseña segura</li>
+                <li>Tu ID de empleado</li>
+                <li>Confirmar tu email personal</li>
+                <li>Aceptar el tratamiento de datos</li>
+            </ul>
+
+            <p>Si no solicitaste esta cuenta, puedes ignorar este mensaje.</p>
+        </div>
+        <div class="footer">
+            <p>Este es un mensaje automático, por favor no respondas a este email.</p>
+            <p>&copy; 2025 Sistema de Catering. Todos los derechos reservados.</p>
+        </div>
+    </div>
+</body>
+</html>
