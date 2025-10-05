@@ -1,6 +1,6 @@
 # Sistema de Catering - Backend
 
-Sistema de gestión de catering empresarial con arquitectura hexagonal.
+Sistema de gestión de catering empresarial con arquitectura de puertos y adaptadores.
 
 ## Stack Tecnológico
 
