@@ -26,8 +26,6 @@ class UserModel(Base):
     password_hash = Column(String(255), nullable=True)
     role = Column(String(50), nullable=False)
     status = Column(String(50), nullable=False)
-    #role = Column(SQLEnum(UserRole), nullable=False)
-    #status = Column(SQLEnum(UserStatus), nullable=False, default=UserStatus.PENDING_ACTIVATION)
 
     full_name = Column(String(255), nullable=False)
     dni = Column(String(20), nullable=False)

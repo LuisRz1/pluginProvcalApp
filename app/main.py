@@ -12,6 +12,8 @@ from app.shared.graphql.schema import schema
 # Repositorios
 from app.users.infrastructure.persistence.user_repository_impl import PostgreSQLUserRepository
 from app.users.infrastructure.persistence.activation_token_repository_impl import PostgreSQLActivationTokenRepository
+from app.attendance.infrastructure.persistence.attendance_repository_impl import PostgreSQLAttendanceRepository
+from app.attendance.infrastructure.services.simple_holiday_service import SimpleHolidayService
 
 # Servicios
 from app.users.infrastructure.external.email_service import SMTPEmailService
@@ -58,9 +60,12 @@ async def get_context(request: Request) -> dict:
     authorization = request.headers.get("authorization")
 
     async with get_db_session() as session:
+        # Repositorios existentes
         user_repo = PostgreSQLUserRepository(session)
         token_repo = PostgreSQLActivationTokenRepository(session)
+        attendance_repo = PostgreSQLAttendanceRepository(session)
 
+        # Servicios existentes
         email_service = SMTPEmailService(
             smtp_host=settings.SMTP_HOST,
             smtp_port=settings.SMTP_PORT,
@@ -76,6 +81,8 @@ async def get_context(request: Request) -> dict:
             access_token_expire_minutes=settings.JWT_ACCESS_TOKEN_EXPIRE_MINUTES,
             refresh_token_expire_days=settings.JWT_REFRESH_TOKEN_EXPIRE_DAYS
         )
+
+        holiday_service = SimpleHolidayService()
 
         current_user = None
         if authorization:
@@ -94,8 +101,10 @@ async def get_context(request: Request) -> dict:
             "session": session,
             "user_repository": user_repo,
             "token_repository": token_repo,
+            "attendance_repository": attendance_repo,
             "email_service": email_service,
             "auth_service": auth_service,
+            "holiday_service": holiday_service,
             "current_user": current_user
         }
 

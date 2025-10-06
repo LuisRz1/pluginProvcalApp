@@ -8,8 +8,10 @@ if TYPE_CHECKING:
     from app.users.domain.user import User
     from app.users.application.ports.user_repository import UserRepository
     from app.users.application.ports.activation_token_repository import ActivationTokenRepository
+    from app.attendance.application.ports.attendance_repository import AttendanceRepository
     from app.users.application.ports.email_service import EmailService
     from app.users.application.ports.auth_service import AuthService
+    from app.attendance.application.ports.holiday_service import HolidayService
 
 
 @dataclass
@@ -19,7 +21,10 @@ class GraphQLContex(TypedDict):
     session: AsyncSession
     user_repository: "UserRepository"
     token_repository: "ActivationTokenRepository"
+    attendance_repository: "AttendanceRepository"
     email_service: "EmailService"
     auth_service: "AuthService"
+    holiday_service: "HolidayService"
     current_user: Optional["User"] = None
+
 
