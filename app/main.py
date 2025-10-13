@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 from contextlib import asynccontextmanager
 
+from app.requests.infrastructure.persistence.shift_swap_repository_impl import PostgreSQLShiftSwapRepository
+from app.requests.infrastructure.persistence.time_off_request_repository_impl import PostgreSQLTimeOffRequestRepository
+from app.requests.infrastructure.persistence.vacation_balance_repository_impl import PostgreSQLVacationBalanceRepository
+from app.requests.infrastructure.persistence.work_schedule_repository_impl import PostgreSQLWorkScheduleRepository
 from app.shared.config.settings import settings
 from app.shared.database.connection import init_db, close_db, get_db_session
 from app.shared.graphql.schema import schema
@@ -64,6 +68,10 @@ async def get_context(request: Request) -> dict:
         user_repo = PostgreSQLUserRepository(session)
         token_repo = PostgreSQLActivationTokenRepository(session)
         attendance_repo = PostgreSQLAttendanceRepository(session)
+        time_off_repo = PostgreSQLTimeOffRequestRepository(session)
+        vacation_balance_repo = PostgreSQLVacationBalanceRepository(session)
+        swap_repo = PostgreSQLShiftSwapRepository(session)
+        work_schedule_repo = PostgreSQLWorkScheduleRepository(session)
 
         # Servicios existentes
         email_service = SMTPEmailService(
@@ -105,6 +113,10 @@ async def get_context(request: Request) -> dict:
             "email_service": email_service,
             "auth_service": auth_service,
             "holiday_service": holiday_service,
+            "time_off_repository": time_off_repo,
+            "vacation_balance_repository": vacation_balance_repo,
+            "swap_repository": swap_repo,
+            "work_schedule_repository": work_schedule_repo,
             "current_user": current_user
         }
 
