@@ -1,6 +1,6 @@
 """Entidad principal de asistencia"""
 from dataclasses import dataclass, field
-from datetime import datetime, time, timezone
+from datetime import datetime, time, timezone, timedelta
 from typing import Optional, List
 from app.attendance.domain.attendance_status import AttendanceStatus, AttendanceType, BreakStatus
 from app.attendance.domain.geolocation import Geolocation
@@ -20,8 +20,8 @@ class Attendance:
     # Horarios
     check_in_time: Optional[datetime] = None
     check_out_time: Optional[datetime] = None
-    scheduled_start_time: time = time(9, 0)  # 9:00 AM por defecto
-    scheduled_end_time: time = time(18, 0)  # 6:00 PM por defecto
+    scheduled_start_time: Optional[time] = None  # Viene del WorkSchedule
+    scheduled_end_time: Optional[time] = None    # Viene del WorkSchedule
 
     # Estado
     status: AttendanceStatus = AttendanceStatus.IN_PROGRESS
@@ -36,6 +36,7 @@ class Attendance:
     # Tardanzas y ajustes
     is_late: bool = False
     late_minutes: int = 0
+    late_tolerance_minutes: int = 15  # Tolerancia antes de marcar tardanza
     requires_regularization: bool = False
     regularization_notes: Optional[str] = None
     regularized_by: Optional[str] = None  # ID del admin
@@ -83,7 +84,7 @@ class Attendance:
 
     def _calculate_lateness(self) -> None:
         """Calcula si llegó tarde y cuántos minutos"""
-        if not self.check_in_time:
+        if not self.check_in_time or not self.scheduled_start_time:
             return
 
         # Combinar fecha con hora programada
@@ -93,7 +94,12 @@ class Attendance:
             tzinfo=timezone.utc
         )
 
-        if self.check_in_time > scheduled_datetime:
+        # Agregar tolerancia
+        scheduled_with_tolerance = scheduled_datetime + timedelta(
+            minutes=self.late_tolerance_minutes
+        )
+
+        if self.check_in_time > scheduled_with_tolerance:
             self.is_late = True
             delta = self.check_in_time - scheduled_datetime
             self.late_minutes = int(delta.total_seconds() / 60)

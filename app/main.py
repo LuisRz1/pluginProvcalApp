@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 from contextlib import asynccontextmanager
 
+from app.building_blocks.exceptions import AuthenticationException
 from app.shared.config.settings import settings
 from app.shared.database.connection import init_db, close_db, get_db_session
 from app.shared.graphql.schema import schema
@@ -13,11 +14,12 @@ from app.shared.graphql.schema import schema
 from app.users.infrastructure.persistence.user_repository_impl import PostgreSQLUserRepository
 from app.users.infrastructure.persistence.activation_token_repository_impl import PostgreSQLActivationTokenRepository
 from app.attendance.infrastructure.persistence.attendance_repository_impl import PostgreSQLAttendanceRepository
-from app.attendance.infrastructure.services.simple_holiday_service import SimpleHolidayService
+from app.attendance.infrastructure.persistence.work_schedule_repository_impl import PostgreSQLWorkScheduleRepository
 
 # Servicios
 from app.users.infrastructure.external.email_service import SMTPEmailService
 from app.shared.security.auth import JWTAuthService
+from app.attendance.infrastructure.services.simple_holiday_service import SimpleHolidayService
 
 
 @asynccontextmanager
@@ -64,6 +66,7 @@ async def get_context(request: Request) -> dict:
         user_repo = PostgreSQLUserRepository(session)
         token_repo = PostgreSQLActivationTokenRepository(session)
         attendance_repo = PostgreSQLAttendanceRepository(session)
+        work_schedule_repo = PostgreSQLWorkScheduleRepository(session)
 
         # Servicios existentes
         email_service = SMTPEmailService(
@@ -92,7 +95,7 @@ async def get_context(request: Request) -> dict:
                 if payload:
                     user_id = payload.get("sub")
                     current_user = await user_repo.find_by_id(user_id)
-            except Exception:
+            except AuthenticationException:
                 pass
 
         # IMPORTANTE: Devolver diccionario, no dataclass
@@ -102,6 +105,7 @@ async def get_context(request: Request) -> dict:
             "user_repository": user_repo,
             "token_repository": token_repo,
             "attendance_repository": attendance_repo,
+            "work_schedule_repository": work_schedule_repo,
             "email_service": email_service,
             "auth_service": auth_service,
             "holiday_service": holiday_service,
