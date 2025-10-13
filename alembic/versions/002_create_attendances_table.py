@@ -20,6 +20,7 @@ depends_on = None
 
 
 def upgrade() -> None:
+    """Crear tabla attendances"""
     # Crear tabla attendances
     op.create_table(
         'attendances',
@@ -30,8 +31,8 @@ def upgrade() -> None:
         # Horarios
         sa.Column('check_in_time', sa.DateTime(timezone=True), nullable=True),
         sa.Column('check_out_time', sa.DateTime(timezone=True), nullable=True),
-        sa.Column('scheduled_start_time', sa.Time, nullable=False, server_default='09:00:00'),
-        sa.Column('scheduled_end_time', sa.Time, nullable=False, server_default='18:00:00'),
+        sa.Column('scheduled_start_time', sa.Time, nullable=True),  # Viene del WorkSchedule
+        sa.Column('scheduled_end_time', sa.Time, nullable=True),
 
         # Estado
         sa.Column('status', sa.String(50), nullable=False),
@@ -46,6 +47,7 @@ def upgrade() -> None:
         # Tardanzas
         sa.Column('is_late', sa.Boolean, nullable=False, server_default='false'),
         sa.Column('late_minutes', sa.Integer, nullable=False, server_default='0'),
+        sa.Column('late_tolerance_minutes', sa.Integer, nullable=False, server_default='15'),
 
         # Regularización
         sa.Column('requires_regularization', sa.Boolean, nullable=False, server_default='false'),
@@ -87,4 +89,5 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    """Eliminar tabla attendances"""
     op.drop_table('attendances')

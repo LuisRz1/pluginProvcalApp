@@ -1,7 +1,7 @@
 """Mutations GraphQL para asistencia"""
-import strawberry
 from strawberry.types import Info
 from datetime import datetime
+import strawberry
 
 from app.attendance.infrastructure.graphql.attendance_inputs import (
     CheckInInput,
@@ -74,7 +74,8 @@ class AttendanceMutations:
             # Ejecutar caso de uso
             use_case = CheckInUseCase(
                 attendance_repository=info.context["attendance_repository"],
-                holiday_service=info.context["holiday_service"]
+                holiday_service=info.context["holiday_service"],
+                work_schedule_repository=info.context["work_schedule_repository"]
             )
 
             result = await use_case.execute(command)

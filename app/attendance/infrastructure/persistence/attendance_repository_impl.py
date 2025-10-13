@@ -29,8 +29,8 @@ class AttendanceModel(Base):
     # Horarios
     check_in_time = Column(DateTime(timezone=True), nullable=True)
     check_out_time = Column(DateTime(timezone=True), nullable=True)
-    scheduled_start_time = Column(Time, nullable=False)
-    scheduled_end_time = Column(Time, nullable=False)
+    scheduled_start_time = Column(Time, nullable=True)  # Viene del WorkSchedule
+    scheduled_end_time = Column(Time, nullable=True)
 
     # Estado
     status = Column(String(50), nullable=False)
@@ -45,6 +45,7 @@ class AttendanceModel(Base):
     # Tardanzas
     is_late = Column(Boolean, default=False)
     late_minutes = Column(Integer, default=0)
+    late_tolerance_minutes = Column(Integer, default=15, nullable=False)
 
     # Regularización
     requires_regularization = Column(Boolean, default=False)
@@ -145,6 +146,7 @@ class PostgreSQLAttendanceRepository(AttendanceRepository):
             "workplace_radius_meters": attendance.workplace_radius_meters,
             "is_late": attendance.is_late,
             "late_minutes": attendance.late_minutes,
+            "late_tolerance_minutes": attendance.late_tolerance_minutes,
             "requires_regularization": attendance.requires_regularization,
             "regularization_notes": attendance.regularization_notes,
             "regularized_by": uuid.UUID(attendance.regularized_by) if attendance.regularized_by else None,
@@ -178,6 +180,7 @@ class PostgreSQLAttendanceRepository(AttendanceRepository):
             workplace_radius_meters=model.workplace_radius_meters,
             is_late=model.is_late,
             late_minutes=model.late_minutes,
+            late_tolerance_minutes=model.late_tolerance_minutes,
             requires_regularization=model.requires_regularization,
             regularization_notes=model.regularization_notes,
             regularized_by=str(model.regularized_by) if model.regularized_by else None,
