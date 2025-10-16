@@ -38,7 +38,13 @@ from app.attendance.application.use_cases.regularize_attendance import (
     RegularizeAttendanceCommand
 )
 from app.building_blocks.exceptions import DomainException, AuthenticationException
+from app.shared.config.settings import settings
 
+# DEBUG: Verifica qué valores tiene settings
+print(f"[DEBUG] Settings loaded:")
+print(f"[DEBUG] WORKPLACE_LATITUDE = {settings.WORKPLACE_LATITUDE}")
+print(f"[DEBUG] WORKPLACE_LONGITUDE = {settings.WORKPLACE_LONGITUDE}")
+print(f"[DEBUG] WORKPLACE_RADIUS_METERS = {settings.WORKPLACE_RADIUS_METERS}")
 
 @strawberry.type
 class AttendanceMutations:
@@ -66,9 +72,9 @@ class AttendanceMutations:
                 latitude=input.latitude,
                 longitude=input.longitude,
                 accuracy=input.accuracy,
-                workplace_latitude=input.workplace_latitude,
-                workplace_longitude=input.workplace_longitude,
-                workplace_radius_meters=input.workplace_radius_meters
+                workplace_latitude=settings.WORKPLACE_LATITUDE,
+                workplace_longitude=settings.WORKPLACE_LONGITUDE,
+                workplace_radius_meters=settings.WORKPLACE_RADIUS_METERS
             )
 
             # Ejecutar caso de uso

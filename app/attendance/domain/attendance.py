@@ -2,10 +2,14 @@
 from dataclasses import dataclass, field
 from datetime import datetime, time, timezone, timedelta
 from typing import Optional, List
+from zoneinfo import ZoneInfo
 from app.attendance.domain.attendance_status import AttendanceStatus, AttendanceType, BreakStatus
 from app.attendance.domain.geolocation import Geolocation
 from app.attendance.domain.break_period import BreakPeriod
 from app.building_blocks.exceptions import DomainException
+
+# Zona horaria de Perú
+PERU_TZ = ZoneInfo("America/Lima")  # UTC-5
 
 @dataclass
 class Attendance:
@@ -60,6 +64,8 @@ class Attendance:
         if self.check_in_time:
             raise DomainException("Ya se registró la entrada para esta jornada")
 
+        print(f"[DEBUG] attendance.workplace={self.workplace_location.latitude},{self.workplace_location.longitude}")
+
         # Validar ubicación
         if self.workplace_location and not location.is_within_radius(
             self.workplace_location, self.workplace_radius_meters
@@ -87,11 +93,14 @@ class Attendance:
         if not self.check_in_time or not self.scheduled_start_time:
             return
 
-        # Combinar fecha con hora programada
+        # Convertir check_in_time a hora de Perú
+        check_in_peru = self.check_in_time.astimezone(PERU_TZ)
+
+        # Combinar fecha con hora programada en zona horaria de Perú
         scheduled_datetime = datetime.combine(
-            self.date.date(),
+            check_in_peru.date(),  # Fecha en hora de Perú
             self.scheduled_start_time,
-            tzinfo=timezone.utc
+            tzinfo=PERU_TZ  # Usar zona horaria de Perú
         )
 
         # Agregar tolerancia
@@ -99,9 +108,10 @@ class Attendance:
             minutes=self.late_tolerance_minutes
         )
 
-        if self.check_in_time > scheduled_with_tolerance:
+        # Comparar horas
+        if check_in_peru > scheduled_with_tolerance:
             self.is_late = True
-            delta = self.check_in_time - scheduled_datetime
+            delta = check_in_peru - scheduled_datetime
             self.late_minutes = int(delta.total_seconds() / 60)
         else:
             self.is_late = False

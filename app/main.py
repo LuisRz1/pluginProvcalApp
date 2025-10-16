@@ -102,6 +102,7 @@ async def get_context(request: Request) -> dict:
         return {
             "request": request,
             "session": session,
+            "settings": settings,
             "user_repository": user_repo,
             "token_repository": token_repo,
             "attendance_repository": attendance_repo,

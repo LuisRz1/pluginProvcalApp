@@ -13,11 +13,12 @@ class CheckInCommand:
     user_id: str
     latitude: float
     longitude: float
+    # Configuración del lugar de trabajo (desde settings)
+    workplace_latitude: float
+    workplace_longitude: float
+    workplace_radius_meters: float
     accuracy: float = 10.0
-    # Configuración del lugar de trabajo (esto debería venir de configuración)
-    workplace_latitude: float = -8.1116778  # Ejemplo: Trujillo
-    workplace_longitude: float = -79.0287578
-    workplace_radius_meters: float = 100.0
+
 
 class CheckInUseCase:
     """
@@ -87,6 +88,10 @@ class CheckInUseCase:
             latitude=command.workplace_latitude,
             longitude=command.workplace_longitude
         )
+
+        print(f"[DEBUG] workplace={command.workplace_latitude},{command.workplace_longitude}")
+        print(f"[DEBUG] command={location.latitude},{location.longitude}")
+
 
         # 6. Verificar si es día festivo
         is_holiday = await self.holiday_service.is_holiday(today)

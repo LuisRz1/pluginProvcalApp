@@ -33,6 +33,11 @@ class Settings(BaseSettings):
     ACTIVATION_TOKEN_EXPIRE_HOURS: int = 48
     ACTIVATION_BASE_URL: str = "http://localhost:8000/activate"
 
+    # Configuración del workplace
+    WORKPLACE_LATITUDE: float = -8.107959
+    WORKPLACE_LONGITUDE: float = -79.004233
+    WORKPLACE_RADIUS_METERS: float = 100.0
+
     class Config:
         env_file = ".env"
         case_sensitive = True
