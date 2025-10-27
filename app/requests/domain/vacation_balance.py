@@ -8,17 +8,21 @@ class VacationBalance:
     """
     Saldo de vacaciones por usuario y año calendario.
     """
+    id: str
     user_id: str
     year: int
+
     total_days: int = 30
+    carried_over_days: int = 0
     used_days: int = 0
 
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def available_days(self) -> int:
-        """Días disponibles = total - usados."""
-        return max(0, self.total_days - self.used_days)
+        """Días disponibles = (total + arrastrado) - usados."""
+        raw = (self.total_days + self.carried_over_days) - self.used_days
+        return raw if raw > 0 else 0
 
     def can_consume(self, n: int) -> bool:
         """¿Se pueden consumir n días?"""

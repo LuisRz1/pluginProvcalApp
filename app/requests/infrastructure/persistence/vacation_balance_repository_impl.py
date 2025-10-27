@@ -20,12 +20,13 @@ class VacationBalanceModel(Base):
     __tablename__ = "vacation_balances"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
     user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     year = Column(Integer, nullable=False, index=True)
 
     total_days = Column(Integer, nullable=False, default=0)
-    consumed_days = Column(Integer, nullable=False, default=0)
     carried_over_days = Column(Integer, nullable=False, default=0)
+    used_days = Column(Integer, nullable=False, default=0)
 
     created_at = Column(DateTime(timezone=True), nullable=False, server_default=sa.text('now()'))
     updated_at = Column(DateTime(timezone=True), nullable=False, server_default=sa.text('now()'))
@@ -71,7 +72,7 @@ class PostgreSQLVacationBalanceRepository(VacationBalanceRepository):
             "user_id": uuid.UUID(b.user_id),
             "year": b.year,
             "total_days": b.total_days,
-            "consumed_days": b.consumed_days,
+            "used_days": b.used_days,
             "carried_over_days": b.carried_over_days,
             "created_at": b.created_at,
             "updated_at": b.updated_at,
@@ -83,7 +84,7 @@ class PostgreSQLVacationBalanceRepository(VacationBalanceRepository):
             user_id=str(m.user_id),
             year=m.year,
             total_days=m.total_days,
-            consumed_days=m.consumed_days,
+            used_days=m.used_days,
             carried_over_days=m.carried_over_days,
             created_at=m.created_at,
             updated_at=m.updated_at,

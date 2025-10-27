@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime, date, timezone, timedelta
-from typing import Optional
+from typing import Optional, Dict, Any
 from zoneinfo import ZoneInfo
 
 from app.building_blocks.exceptions import DomainException
@@ -27,9 +27,7 @@ class TimeOffRequest:
     status: RequestStatus = RequestStatus.PENDING
     reason: Optional[str] = None
 
-    # Auditoría (alineado con tu tabla)
-    approver_id: Optional[str] = None
-    decision_at: Optional[datetime] = None
+    audit: Dict[str, Any] = field(default_factory=dict)
 
     created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     updated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))

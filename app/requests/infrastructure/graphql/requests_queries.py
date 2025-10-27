@@ -49,7 +49,7 @@ class RequestsQueries:
             items=[
                 ShiftSwapInfo(
                     id=s.id,
-                    requester_id=s.requester_id,
+                    requester_id=s.requester_user_id,
                     target_user_id=s.target_user_id,
                     requester_shift_id=s.requester_shift_id,
                     target_shift_id=s.target_shift_id,
@@ -84,7 +84,7 @@ class RequestsQueries:
                 user_id=balance.user_id,
                 year=balance.year,
                 total_days=balance.total_days,
-                consumed_days=balance.consumed_days,
+                used_days=balance.used_days,
                 carried_over_days=balance.carried_over_days,
                 available_days=balance.available_days()
             )

@@ -18,11 +18,11 @@ Base = declarative_base()
 
 
 class ShiftSwapRequestModel(Base):
-    __tablename__ = "shift_swaps"
+    __tablename__ = "shift_swap_requests"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    requester_id = Column(UUID(as_uuid=True), nullable=False, index=True)
+    requester_user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
     target_user_id = Column(UUID(as_uuid=True), nullable=False, index=True)
 
     requester_shift_id = Column(UUID(as_uuid=True), nullable=False, index=True)
@@ -70,7 +70,7 @@ class PostgreSQLShiftSwapRepository(ShiftSwapRepository):
     async def find_my_swaps(self, user_id: str, limit: int = 50) -> List[ShiftSwapRequest]:
         stmt = (
             select(ShiftSwapRequestModel)
-            .where((ShiftSwapRequestModel.requester_id == user_id) | (ShiftSwapRequestModel.target_user_id == user_id))
+            .where((ShiftSwapRequestModel.requester_user_id == user_id) | (ShiftSwapRequestModel.target_user_id == user_id))
             .order_by(ShiftSwapRequestModel.created_at.desc())
             .limit(limit)
         )
@@ -81,7 +81,7 @@ class PostgreSQLShiftSwapRepository(ShiftSwapRepository):
     # ---------- helpers ----------
     def _to_dict(self, s: ShiftSwapRequest) -> dict:
         return {
-            "requester_id": uuid.UUID(s.requester_id),
+            "requester_user_id": uuid.UUID(s.requester_user_id),
             "target_user_id": uuid.UUID(s.target_user_id),
             "requester_shift_id": uuid.UUID(s.requester_shift_id),
             "target_shift_id": uuid.UUID(s.target_shift_id),
@@ -95,7 +95,7 @@ class PostgreSQLShiftSwapRepository(ShiftSwapRepository):
     def _to_domain(self, m: ShiftSwapRequestModel) -> ShiftSwapRequest:
         return ShiftSwapRequest(
             id=str(m.id),
-            requester_id=str(m.requester_id),
+            requester_user_id=str(m.requester_user_id),
             target_user_id=str(m.target_user_id),
             requester_shift_id=str(m.requester_shift_id),
             target_shift_id=str(m.target_shift_id),

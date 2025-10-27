@@ -177,7 +177,7 @@ class RequestsMutations:
                 message=result["message"],
                 swap=ShiftSwapInfo(
                     id=s.id,
-                    requester_id=s.requester_id,
+                    requester_id=s.requester_user_id,
                     target_user_id=s.target_user_id,
                     requester_shift_id=s.requester_shift_id,
                     target_shift_id=s.target_shift_id,
@@ -216,7 +216,7 @@ class RequestsMutations:
                 message=result["message"],
                 swap=ShiftSwapInfo(
                     id=s.id,
-                    requester_id=s.requester_id,
+                    requester_id=s.requester_user_id,
                     target_user_id=s.target_user_id,
                     requester_shift_id=s.requester_shift_id,
                     target_shift_id=s.target_shift_id,

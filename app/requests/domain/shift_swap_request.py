@@ -29,6 +29,8 @@ class ShiftSwapRequest:
     target_shift_id: str = ""
 
     status: SwapStatus = SwapStatus.PENDING
+    note: Optional[str] = None
+
     requested_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     responded_at: Optional[datetime] = None
 

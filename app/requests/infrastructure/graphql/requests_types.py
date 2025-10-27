@@ -22,7 +22,7 @@ class VacationBalanceInfo:
     user_id: str
     year: int
     total_days: int
-    consumed_days: int
+    used_days: int
     carried_over_days: int
     available_days: int
 
