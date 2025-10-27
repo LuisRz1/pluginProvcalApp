@@ -1,0 +1,13 @@
+from abc import ABC, abstractmethod
+from typing import Optional, List
+from app.menu.domain.monthly_menu import MonthlyMenu
+
+class MonthlyMenuRepository(ABC):
+    @abstractmethod
+    async def upsert(self, menu: MonthlyMenu) -> MonthlyMenu: ...
+    @abstractmethod
+    async def find_by_year_month(self, year: int, month: int) -> Optional[MonthlyMenu]: ...
+    @abstractmethod
+    async def find_by_id(self, menu_id: str) -> Optional[MonthlyMenu]: ...
+    @abstractmethod
+    async def list_recent(self, limit: int = 12) -> List[MonthlyMenu]: ...

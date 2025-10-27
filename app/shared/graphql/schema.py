@@ -1,5 +1,8 @@
 """Module de definición del schema de GraphQL"""
 import strawberry
+
+from app.menu.infrastructure.graphql.menu_mutations import MenuMutations
+from app.menu.infrastructure.graphql.menu_queries import MenuQueries
 from app.users.infrastructure.graphql.queries import UserQueries
 from app.attendance.infrastructure.graphql.work_schedule_queries import WorkScheduleQueries
 from app.users.infrastructure.graphql.mutations import UserMutations
@@ -9,7 +12,7 @@ from app.attendance.infrastructure.graphql.attendance_mutations import Attendanc
 from app.attendance.infrastructure.graphql.work_schedule_mutations import WorkScheduleMutations
 
 @strawberry.type
-class Query(UserQueries, AuthQueries, WorkScheduleQueries):
+class Query(UserQueries, AuthQueries, WorkScheduleQueries, MenuQueries):
     """Query raíz de GraphQL"""
 
     @strawberry.field
@@ -19,7 +22,7 @@ class Query(UserQueries, AuthQueries, WorkScheduleQueries):
 
 
 @strawberry.type
-class Mutation(UserMutations, AuthMutations, AttendanceMutations, WorkScheduleMutations):
+class Mutation(UserMutations, AuthMutations, AttendanceMutations, WorkScheduleMutations, MenuMutations):
     """Mutation raíz de GraphQL"""
 
 
