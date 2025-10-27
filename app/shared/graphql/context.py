@@ -8,6 +8,11 @@ from app.menu.application.ports.menu_change_repository import MenuChangeReposito
 from app.menu.application.ports.menu_day_repository import MenuDayRepository
 from app.menu.application.ports.monthly_menu_repository import MonthlyMenuRepository
 
+from app.requests.application.ports.shift_swap_repository import ShiftSwapRepository
+from app.requests.application.ports.time_off_request_repository import TimeOffRequestRepository
+from app.requests.application.ports.vacation_balance_repository import VacationBalanceRepository
+from app.requests.application.ports.work_schedule_repository import WorkScheduleRepository
+
 if TYPE_CHECKING:
     from app.users.domain.user import User
     from app.users.application.ports.user_repository import UserRepository
@@ -18,6 +23,7 @@ if TYPE_CHECKING:
 
     from app.users.application.ports.email_service import EmailService
     from app.users.application.ports.auth_service import AuthService
+    from app.attendance.application.ports.holiday_service import HolidayService
 
 
 @dataclass
@@ -25,6 +31,15 @@ class GraphQLContex(TypedDict):
     """Contexto de GraphQL como TypedDict para Strawberry"""
     request: Request
     session: AsyncSession
+    user_repository: "UserRepository"
+    token_repository: "ActivationTokenRepository"
+    attendance_repository: "AttendanceRepository"
+
+    time_off_repository: "TimeOffRequestRepository"
+    vacation_balance_repository: "VacationBalanceRepository"
+    swap_repository: "ShiftSwapRepository"
+    work_schedule_repository: "WorkScheduleRepository"
+
 
     email_service: "EmailService"
     auth_service: "AuthService"
