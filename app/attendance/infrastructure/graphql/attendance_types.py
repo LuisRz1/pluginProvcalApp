@@ -47,9 +47,9 @@ class CheckInResponse:
 class CheckOutResponse:
     success: bool
     message: str
-    attendance_id: str
-    check_out_time: datetime
-    total_work_hours: float
+    attendance_id: Optional[str]
+    check_out_time: Optional[datetime]
+    total_work_hours: Optional[float]
     no_breaks_registered: bool
 
 @strawberry.type
@@ -57,15 +57,15 @@ class StartBreakResponse:
     success: bool
     message: str
     break_id: Optional[str]
-    start_time: datetime
+    start_time: Optional[datetime]
     allowed_duration_minutes: int
 
 @strawberry.type
 class EndBreakResponse:
     success: bool
     message: str
-    end_time: datetime
-    duration_minutes: int
+    end_time: Optional[datetime]
+    duration_minutes: Optional[int]
     is_exceeded: bool
 
 @strawberry.type

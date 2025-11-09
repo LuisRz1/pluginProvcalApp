@@ -15,6 +15,11 @@ from app.menu.domain.menu_enums import MealType
 from .menu_inputs import UploadMonthlyMenuInput, ProposeMenuChangeInput, ReviewMenuChangeInput
 from .menu_types import UploadMenuResponse, ConfirmOverwriteResponse, MenuChangeInfo
 
+def _require_roles(info, allowed: set[str]):
+    user = info.context.get("current_user")
+    if not user or user.role.value not in allowed:
+        raise Exception("No autorizado")
+
 @strawberry.type
 class MenuMutations:
 

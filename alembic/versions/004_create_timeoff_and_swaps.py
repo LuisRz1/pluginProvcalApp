@@ -77,12 +77,7 @@ def upgrade() -> None:
         sa.CheckConstraint("type IN ('vacation', 'permission')", name='chk_time_off_type'),
     )
     op.create_index('idx_time_off_user', 'time_off_requests', ['user_id'])
-    op.create_index('idx_time_off_dates', 'time_off_requests', ['start_date', 'end_date'])
     op.create_index('idx_time_off_status', 'time_off_requests', ['status'])
-
-    op.create_index('idx_time_off_user', 'time_off_requests', ['user_id'])
-    op.create_index('idx_time_off_status', 'time_off_requests', ['status'])
-    op.create_index('idx_time_off_user_start', 'time_off_requests', ['user_id', 'start_date'])
     op.create_index('idx_time_off_dates', 'time_off_requests', ['start_date', 'end_date'])
 
     # ---------------------------------------------------------------------

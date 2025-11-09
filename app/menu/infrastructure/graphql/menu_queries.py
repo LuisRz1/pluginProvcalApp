@@ -6,6 +6,9 @@ from app.menu.application.use_cases.get_menu_change_history import GetMenuChange
 from .menu_types import MonthlyMenuCalendar, MenuDayInfo, MenuChangeInfo, ExportedFile
 from ...application.use_cases.export_monthly_menu import ExportMonthlyMenuUseCase
 
+def _require_auth(info):
+    if not info.context.get("current_user"):
+        raise Exception("No autenticado")
 
 @strawberry.type
 class MenuQueries:

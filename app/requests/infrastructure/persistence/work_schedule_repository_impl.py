@@ -5,7 +5,7 @@ from datetime import date
 from typing import Optional
 
 import sqlalchemy as sa
-from sqlalchemy import Column, String, Time, Date, DateTime, Boolean, Integer
+from sqlalchemy import Column, String, Time, Date, DateTime, Boolean, Integer, JSON
 from sqlalchemy.dialects.postgresql import UUID as PG_UUID, ARRAY
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import declarative_base
@@ -40,10 +40,7 @@ class WorkScheduleModel(Base):
     start_time = Column(Time, nullable=False)
     end_time = Column(Time, nullable=False)
 
-    # Días de la semana en que aplica el turno (ej [0,1,2,3,4])
-    # En Alembic 003 esto suele ser ARRAY(Integer) o JSON.
-    # Lo incluimos para reflejar la tabla aunque en los swaps no lo usamos directamente.
-    working_days = Column(ARRAY(Integer), nullable=False)
+    working_days = Column(JSON, nullable=False)
 
     late_tolerance_minutes = Column(Integer, nullable=False, server_default=sa.text("5"))
     break_duration_minutes = Column(Integer, nullable=False, server_default=sa.text("30"))
@@ -92,8 +89,8 @@ class PostgreSQLWorkScheduleRepository(WorkScheduleRepository):
             shift_type=m.shift_type,
             start_time=m.start_time,
             end_time=m.end_time,
-            effective_from=m.effective_from,
-            effective_until=m.effective_until,
+            valid_from=m.effective_from,
+            valid_to=m.effective_until,
         )
 
     # ---------------------------------
@@ -107,24 +104,14 @@ class PostgreSQLWorkScheduleRepository(WorkScheduleRepository):
         - el turno existe
         - y luego el caso de uso valida que pertenece al usuario correcto.
         """
-        stmt = (
-            select(WorkScheduleModel)
-            .where(WorkScheduleModel.id == uuid.UUID(shift_id))
-            .limit(1)
-        )
+        stmt = select(WorkScheduleModel).where(WorkScheduleModel.id == uuid.UUID(shift_id)).limit(1)
+
         result = await self.session.execute(stmt)
-        model: Optional[WorkScheduleModel] = result.scalar_one_or_none()
+        model = result.scalar_one_or_none()
 
-        if model is None:
-            return None
+        return self._to_summary(model) if model else None
 
-        return self._to_summary(model)
-
-    async def find_user_shift_on(
-        self,
-        check_date: date,
-        user_id: str,
-    ) -> Optional[WorkShiftSummary]:
+    async def find_user_shift_on(self, check_date: date, user_id: str) -> Optional[WorkShiftSummary]:
         """
         Devuelve el turno vigente de un usuario para una fecha dada.
 
@@ -154,9 +141,5 @@ class PostgreSQLWorkScheduleRepository(WorkScheduleRepository):
         )
 
         result = await self.session.execute(stmt)
-        model: Optional[WorkScheduleModel] = result.scalar_one_or_none()
-
-        if model is None:
-            return None
-
-        return self._to_summary(model)
+        model = result.scalar_one_or_none()
+        return self._to_summary(model) if model else None

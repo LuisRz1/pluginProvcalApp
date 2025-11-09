@@ -38,7 +38,7 @@ class PostgreSQLVacationBalanceRepository(VacationBalanceRepository):
 
     async def get_for_user_year(self, user_id: str, year: int) -> Optional[VacationBalance]:
         stmt = select(VacationBalanceModel).where(
-            VacationBalanceModel.user_id == user_id,
+            VacationBalanceModel.user_id == UUID(user_id),
             VacationBalanceModel.year == year
         )
         result = await self.session.execute(stmt)
@@ -46,7 +46,9 @@ class PostgreSQLVacationBalanceRepository(VacationBalanceRepository):
         return self._to_domain(m) if m else None
 
     async def save(self, balance: VacationBalance) -> VacationBalance:
-        stmt = select(VacationBalanceModel).where(VacationBalanceModel.id == balance.id)
+        stmt = select(VacationBalanceModel).where(
+            VacationBalanceModel.id == (uuid.UUID(balance.id) if balance.id else sa.null())
+        )
         result = await self.session.execute(stmt)
         m = result.scalar_one_or_none()
 

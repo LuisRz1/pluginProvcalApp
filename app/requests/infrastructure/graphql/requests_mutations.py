@@ -166,8 +166,8 @@ class RequestsMutations:
             )
             use_case = ProposeShiftSwapUseCase(
                 swap_repository=info.context["swap_repository"],
-                user_repository=info.context["user_repository"],
-                work_schedule_repository=info.context["work_schedule_repository"]
+                work_schedule_repository=info.context["requests_work_schedule_repository"],
+                user_repository=info.context["user_repository"]
             )
             result = await use_case.execute(cmd)
 
@@ -207,7 +207,7 @@ class RequestsMutations:
             use_case = RespondShiftSwapUseCase(
                 swap_repository=info.context["swap_repository"],
                 user_repository=info.context["user_repository"],
-                work_schedule_repository=info.context["work_schedule_repository"]
+                work_schedule_repository=info.context["requests_work_schedule_repository"],
             )
             result = await use_case.execute(cmd)
             s = result["swap"]

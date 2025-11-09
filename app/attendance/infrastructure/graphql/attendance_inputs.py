@@ -36,3 +36,4 @@ class RegularizeAttendanceInput:
     attendance_id: str
     notes: str
     adjusted_check_in: Optional[datetime] = None
+    adjusted_check_out: Optional[datetime] = None

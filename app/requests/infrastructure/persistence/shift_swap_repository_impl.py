@@ -41,7 +41,9 @@ class PostgreSQLShiftSwapRepository(ShiftSwapRepository):
         self.session = session
 
     async def save(self, swap: ShiftSwapRequest) -> ShiftSwapRequest:
-        stmt = select(ShiftSwapRequestModel).where(ShiftSwapRequestModel.id == swap.id)
+        stmt = select(ShiftSwapRequestModel).where(
+            ShiftSwapRequestModel.id == (uuid.UUID(swap.id) if swap.id else sa.null())
+        )
         result = await self.session.execute(stmt)
         m = result.scalar_one_or_none()
 
@@ -62,7 +64,7 @@ class PostgreSQLShiftSwapRepository(ShiftSwapRepository):
         return self._to_domain(m)
 
     async def find_by_id(self, swap_id: str) -> Optional[ShiftSwapRequest]:
-        stmt = select(ShiftSwapRequestModel).where(ShiftSwapRequestModel.id == swap_id)
+        stmt = select(ShiftSwapRequestModel).where(ShiftSwapRequestModel.id == UUID(swap_id))
         result = await self.session.execute(stmt)
         m = result.scalar_one_or_none()
         return self._to_domain(m) if m else None
@@ -70,7 +72,10 @@ class PostgreSQLShiftSwapRepository(ShiftSwapRepository):
     async def find_my_swaps(self, user_id: str, limit: int = 50) -> List[ShiftSwapRequest]:
         stmt = (
             select(ShiftSwapRequestModel)
-            .where((ShiftSwapRequestModel.requester_user_id == user_id) | (ShiftSwapRequestModel.target_user_id == user_id))
+            .where(
+                (ShiftSwapRequestModel.requester_user_id == UUID(user_id)) |
+                (ShiftSwapRequestModel.target_user_id == UUID(user_id))
+            )
             .order_by(ShiftSwapRequestModel.created_at.desc())
             .limit(limit)
         )

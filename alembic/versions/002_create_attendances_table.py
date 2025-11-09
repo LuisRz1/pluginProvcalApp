@@ -78,7 +78,7 @@ def upgrade() -> None:
     op.create_check_constraint(
         'valid_attendance_status',
         'attendances',
-        "status IN ('in_progress', 'on_break', 'completed', 'incomplete', 'pending_regularization')"
+        "status IN ('in_progress', 'on_break', 'completed','pending_regularization')"
     )
 
     op.create_check_constraint(

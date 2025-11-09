@@ -91,7 +91,7 @@ class PostgreSQLAttendanceRepository(AttendanceRepository):
 
     async def find_by_id(self, attendance_id: str) -> Optional[Attendance]:
         """Busca una asistencia por ID"""
-        stmt = select(AttendanceModel).where(AttendanceModel.id == attendance_id)
+        stmt = select(AttendanceModel).where(AttendanceModel.id == UUID(attendance_id))
         result = await self.session.execute(stmt)
         db_attendance = result.scalar_one_or_none()
 

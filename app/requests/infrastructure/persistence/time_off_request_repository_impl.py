@@ -45,18 +45,19 @@ class PostgreSQLTimeOffRequestRepository(TimeOffRequestRepository):
         self.session = session
 
     async def save(self, req: TimeOffRequest) -> TimeOffRequest:
-        stmt = select(TimeOffRequestModel).where(TimeOffRequestModel.id == req.id)
+        from sqlalchemy.dialects.postgresql import UUID as PG_UUID  # por si lo necesitas
+        stmt = select(TimeOffRequestModel).where(
+            TimeOffRequestModel.id == (uuid.UUID(req.id) if req.id else sa.null())
+        )
         result = await self.session.execute(stmt)
         db_req = result.scalar_one_or_none()
 
         if db_req:
-            # update
             data = self._to_dict(req)
             for k, v in data.items():
                 setattr(db_req, k, v)
             db_req.updated_at = datetime.now(timezone.utc)
         else:
-            # create
             db_req = TimeOffRequestModel(
                 id=uuid.uuid4() if not req.id else uuid.UUID(req.id),
                 **self._to_dict(req)
@@ -67,8 +68,9 @@ class PostgreSQLTimeOffRequestRepository(TimeOffRequestRepository):
         await self.session.refresh(db_req)
         return self._to_domain(db_req)
 
+
     async def find_by_id(self, request_id: str) -> Optional[TimeOffRequest]:
-        stmt = select(TimeOffRequestModel).where(TimeOffRequestModel.id == request_id)
+        stmt = select(TimeOffRequestModel).where(TimeOffRequestModel.id == UUID(request_id))
         result = await self.session.execute(stmt)
         db_req = result.scalar_one_or_none()
         return self._to_domain(db_req) if db_req else None
@@ -76,7 +78,7 @@ class PostgreSQLTimeOffRequestRepository(TimeOffRequestRepository):
     async def find_by_user(self, user_id: str, limit: int = 50) -> List[TimeOffRequest]:
         stmt = (
             select(TimeOffRequestModel)
-            .where(TimeOffRequestModel.user_id == user_id)
+            .where(TimeOffRequestModel.user_id == UUID(user_id))
             .order_by(TimeOffRequestModel.start_date.desc())
             .limit(limit)
         )
@@ -91,7 +93,7 @@ class PostgreSQLTimeOffRequestRepository(TimeOffRequestRepository):
         """
         stmt = (
             select(TimeOffRequestModel)
-            .where(TimeOffRequestModel.user_id == user_id)
+            .where(TimeOffRequestModel.user_id == UUID(user_id))
             .where(TimeOffRequestModel.start_date <= end)
             .where(TimeOffRequestModel.end_date >= start)
         )
