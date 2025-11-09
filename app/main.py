@@ -5,6 +5,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from strawberry.fastapi import GraphQLRouter
 from contextlib import asynccontextmanager
 
+from app.menu.application.services.nutrition_validator import SimpleNutritionValidator
+from app.menu.infrastructure.persistence.menu_change_repository_impl import PostgreSQLMenuChangeRepository
+from app.menu.infrastructure.persistence.menu_day_repository_impl import PostgreSQLMenuDayRepository
+from app.menu.infrastructure.persistence.monthly_menu_repository_impl import PostgreSQLMonthlyMenuRepository
 from app.requests.infrastructure.persistence.shift_swap_repository_impl import PostgreSQLShiftSwapRepository
 from app.requests.infrastructure.persistence.time_off_request_repository_impl import PostgreSQLTimeOffRequestRepository
 from app.requests.infrastructure.persistence.vacation_balance_repository_impl import PostgreSQLVacationBalanceRepository
@@ -70,11 +74,14 @@ async def get_context(request: Request) -> dict:
         user_repo = PostgreSQLUserRepository(session)
         token_repo = PostgreSQLActivationTokenRepository(session)
         attendance_repo = PostgreSQLAttendanceRepository(session)
-        work_schedule_repo = PostgreSQLWorkScheduleRepository(session)
         time_off_repo = PostgreSQLTimeOffRequestRepository(session)
         vacation_balance_repo = PostgreSQLVacationBalanceRepository(session)
         swap_repo = PostgreSQLShiftSwapRepository(session)
         work_schedule_repo = PostgreSQLWorkScheduleRepository(session)
+        monthly_menu_repo = PostgreSQLMonthlyMenuRepository(session)
+        menu_day_repo = PostgreSQLMenuDayRepository(session)
+        menu_change_repo = PostgreSQLMenuChangeRepository(session)
+        nutrition_validator = SimpleNutritionValidator()
 
         # Servicios existentes
         email_service = SMTPEmailService(
@@ -121,8 +128,11 @@ async def get_context(request: Request) -> dict:
             "time_off_repository": time_off_repo,
             "vacation_balance_repository": vacation_balance_repo,
             "swap_repository": swap_repo,
-            "work_schedule_repository": work_schedule_repo,
-            "current_user": current_user
+            "current_user": current_user,
+            "monthly_menu_repository": monthly_menu_repo,
+            "menu_day_repository": menu_day_repo,
+            "menu_change_repository": menu_change_repo,
+            "nutrition_validator": nutrition_validator,
         }
 
 

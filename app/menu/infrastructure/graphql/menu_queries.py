@@ -1,14 +1,16 @@
 import strawberry
-from typing import List
+from typing import List, Optional
 from datetime import date
 from app.menu.application.use_cases.get_monthly_menu import GetMonthlyMenuUseCase, GetMonthlyMenuQuery
 from app.menu.application.use_cases.get_menu_change_history import GetMenuChangeHistoryUseCase, GetMenuChangeHistoryQuery
-from .menu_types import MonthlyMenuCalendar, MenuDayInfo, MenuChangeInfo
+from .menu_types import MonthlyMenuCalendar, MenuDayInfo, MenuChangeInfo, ExportedFile
+from ...application.use_cases.export_monthly_menu import ExportMonthlyMenuUseCase
+
 
 @strawberry.type
 class MenuQueries:
     @strawberry.field
-    async def menu(self, info, year: int, month: int) -> MonthlyMenuCalendar | None:
+    async def menu(self, info, year: int, month: int) -> Optional[MonthlyMenuCalendar]:
         days = await GetMonthlyMenuUseCase(
             info.context["monthly_menu_repository"],
             info.context["menu_day_repository"]
@@ -26,7 +28,7 @@ class MenuQueries:
                 lunch=d["lunch"],
                 dinner=d["dinner"],
                 is_holiday=d["is_holiday"],
-                nutrition_flags=d["nutrition_flags"]
+                nutrition_flags=d["nutrition_flags"],
             ) for d in days]
         )
 
@@ -49,6 +51,15 @@ class MenuQueries:
                 decided_by=x["decided_by"],
                 decided_at=_parse(x["decided_at"]),
                 notes=x["notes"],
-                batch_id=x["batch_id"]
+                batch_id=x["batch_id"],
             ) for x in data
         ]
+
+    @strawberry.field
+    async def export_monthly_menu(self, info, year: int, month: int) -> ExportedFile:
+        uc = ExportMonthlyMenuUseCase(
+            info.context["monthly_menu_repository"],
+            info.context["menu_day_repository"],
+        )
+        res = await uc.execute(year, month)
+        return ExportedFile(**res)

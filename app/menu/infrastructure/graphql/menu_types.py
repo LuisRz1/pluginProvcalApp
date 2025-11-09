@@ -43,3 +43,11 @@ class ConfirmOverwriteResponse:
     status: str
     message: str
     preview: strawberry.scalars.JSON
+
+
+@strawberry.type
+class ExportedFile:
+    status: str
+    filename: Optional[str] = None
+    content_base64: Optional[str] = None
+    message: Optional[str] = None

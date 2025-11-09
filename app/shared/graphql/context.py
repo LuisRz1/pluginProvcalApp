@@ -40,14 +40,9 @@ class GraphQLContex(TypedDict):
     swap_repository: "ShiftSwapRepository"
     work_schedule_repository: "WorkScheduleRepository"
 
-
     email_service: "EmailService"
     auth_service: "AuthService"
     holiday_service: "HolidayService"
-
-    user_repository: "UserRepository"
-    token_repository: "ActivationTokenRepository"
-    attendance_repository: "AttendanceRepository"
 
     monthly_menu_repository: "MonthlyMenuRepository"
     menu_day_repository: "MenuDayRepository"

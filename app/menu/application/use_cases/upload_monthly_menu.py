@@ -1,7 +1,9 @@
+import base64
+import csv
 import io
 import uuid
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, datetime
 from typing import List, Dict, Any, Tuple
 
 from app.menu.domain.monthly_menu import MonthlyMenu
@@ -34,80 +36,98 @@ class UploadMonthlyMenuResult:
     template_example: List[str] | None = None
 
 class UploadMonthlyMenuUseCase:
-    def __init__(self, menu_repo: MonthlyMenuRepository, day_repo: MenuDayRepository):
-        self.menu_repo = menu_repo
-        self.day_repo = day_repo
+    def __init__(
+        self,
+        monthly_repo: MonthlyMenuRepository,
+        menu_day_repo: MenuDayRepository,
+        holiday_service=None,              # ← nuevo
+        nutrition_validator=None           # ← lo usaremos en el punto 2
+    ):
+        self.monthly_repo = monthly_repo
+        self.menu_day_repo = menu_day_repo
+        self.holiday_service = holiday_service
+        self.nutrition_validator = nutrition_validator
 
-    async def execute(self, cmd: UploadMonthlyMenuCommand) -> UploadMonthlyMenuResult:
-        if pd is None:
-            return UploadMonthlyMenuResult("error", "Pandas no disponible en el backend", [], None)
+    async def execute(self, year: int, month: int, filename: str, file_base64: str):
+        # 1. decodificar archivo
+        try:
+            raw = base64.b64decode(file_base64)
+        except Exception:
+            return {
+                "status": "error",
+                "message": "El archivo no está en base64 válido"
+            }
 
-        # 1) leer xlsx
-        df = pd.read_excel(io.BytesIO(cmd.file_bytes))
-        cols = [c.strip().lower() for c in df.columns]
-        df.columns = cols
+        # 2. parsear CSV/XLSX-convertido-a-CSV (tú ya lo trabajabas así)
+        # asumimos que llega como CSV para simplificar
+        csv_buffer = io.StringIO(raw.decode("utf-8"))
+        reader = csv.DictReader(csv_buffer)
+        cols = reader.fieldnames or []
 
         missing = [c for c in REQUIRED_COLUMNS if c not in cols]
         if missing:
-            return UploadMonthlyMenuResult(
-                status="error",
-                message=f"Faltan columnas: {', '.join(missing)}",
-                preview_days=[],
-                template_example=REQUIRED_COLUMNS
-            )
+            return {
+                "status": "error",
+                "message": f"Faltan columnas: {', '.join(missing)}",
+                "expected_columns": REQUIRED_COLUMNS
+            }
 
-        # 2) validar mes
-        df["date"] = pd.to_datetime(df["date"]).dt.date
-        wrong_month = [d for d in df["date"].tolist() if (d.year != cmd.year or d.month != cmd.month)]
-        if wrong_month:
-            return UploadMonthlyMenuResult(
-                status="error",
-                message="El archivo contiene fechas fuera del mes/año indicado",
-                preview_days=[],
-                template_example=None
-            )
-
-        # 3) ¿existe menú actual?
-        existing = await self.menu_repo.find_by_year_month(cmd.year, cmd.month)
+        # 3. ¿ya existe menú para ese mes?
+        existing = await self.monthly_repo.find_by_year_month(year, month)
         if existing:
-            # devolvemos preview (conflict) para que el front confirme overwrite
-            preview = [
-                dict(date=str(r["date"]), breakfast=r["breakfast"], lunch=r["lunch"], dinner=r["dinner"])
-                for _, r in df.iterrows()
-            ]
-            return UploadMonthlyMenuResult(
-                status="conflict",
-                message="Ya existe un menú para ese mes. ¿Deseas reemplazarlo?",
-                preview_days=preview
-            )
+            # devolvemos preview pero NO pisamos todavía
+            preview_days = []
+            csv_buffer.seek(0)
+            next(reader)  # saltar header
+            csv_buffer.seek(0)
+            reader = csv.DictReader(csv_buffer)
+            for row in reader:
+                preview_days.append({
+                    "date": row["date"],
+                    "breakfast": row["breakfast"],
+                    "lunch": row["lunch"],
+                    "dinner": row["dinner"],
+                })
+            return {
+                "status": "conflict",
+                "message": "Ya existe un menú para este mes. Confirme sobrescritura.",
+                "preview_days": preview_days
+            }
 
-        # 4) crear menu y days (draft)
-        menu = MonthlyMenu(
-            id=None,
-            year=cmd.year,
-            month=cmd.month,
-            status=MenuStatus.DRAFT,
-            source_filename=cmd.filename,
-            created_by=cmd.user_id
-        )
-        menu = await self.menu_repo.upsert(menu)
+        # 4. crear menú mensual
+        monthly = MonthlyMenu.create(year=year, month=month, source_filename=filename)
+        monthly = await self.monthly_repo.upsert(monthly)
 
+        # 5. crear días
         days: List[MenuDay] = []
-        for _, r in df.iterrows():
-            d = MenuDay(
-                id=None,
-                menu_id=menu.id,
-                date=r["date"],
-                breakfast=str(r["breakfast"] or ""),
-                lunch=str(r["lunch"] or ""),
-                dinner=str(r["dinner"] or ""),
+        csv_buffer.seek(0)
+        reader = csv.DictReader(csv_buffer)
+        for row in reader:
+            day_date = datetime.strptime(row["date"], "%Y-%m-%d").date()
+            is_holiday = False
+            if self.holiday_service is not None:
+                # si tu holiday_service tiene otra firma, la ajustas aquí
+                is_holiday = await self.holiday_service.is_holiday(day_date)
+
+            day = MenuDay.create(
+                menu_id=str(monthly.id),
+                date=day_date,
+                breakfast=row["breakfast"],
+                lunch=row["lunch"],
+                dinner=row["dinner"],
+                is_holiday=is_holiday,
             )
-            days.append(d)
+            days.append(day)
 
-        await self.day_repo.bulk_replace(menu.id, days)
+        # 6. guardar días
+        await self.menu_day_repo.bulk_replace(str(monthly.id), days)
 
-        preview = [
-            dict(date=str(d.date), breakfast=d.breakfast, lunch=d.lunch, dinner=d.dinner)
-            for d in days
-        ]
-        return UploadMonthlyMenuResult("ok", "Menú cargado en borrador", preview)
+        # 7. opcional: correr validación nutricional automática
+        if self.nutrition_validator is not None:
+            await self.nutrition_validator.validate_menu_days(days, self.menu_day_repo)
+
+        return {
+            "status": "ok",
+            "message": "Menú mensual cargado correctamente",
+            "menu_id": str(monthly.id)
+        }
