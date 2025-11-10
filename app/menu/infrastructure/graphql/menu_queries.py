@@ -14,25 +14,36 @@ def _require_auth(info):
 class MenuQueries:
     @strawberry.field
     async def menu(self, info, year: int, month: int) -> Optional[MonthlyMenuCalendar]:
-        days = await GetMonthlyMenuUseCase(
-            info.context["monthly_menu_repository"],
-            info.context["menu_day_repository"]
-        ).execute(GetMonthlyMenuQuery(year, month))
+        # Requiere estar autenticado
+        _require_auth(info)
 
-        if not days:
+        monthly_repo = info.context["monthly_menu_repository"]
+        day_repo = info.context["menu_day_repository"]
+
+        # 1) Buscar el menú del mes
+        monthly = await monthly_repo.find_by_year_month(year, month)
+        if not monthly:
             return None
 
+        # 2) Listar días de ese menú
+        days = await day_repo.list_by_menu(str(monthly.id))
+
+        # 3) Mapear a tus tipos GraphQL reales (NO MonthlyMenuGQL)
         return MonthlyMenuCalendar(
-            year=year, month=month,
-            days=[MenuDayInfo(
-                id=d["id"],
-                date=date.fromisoformat(d["date"]),
-                breakfast=d["breakfast"],
-                lunch=d["lunch"],
-                dinner=d["dinner"],
-                is_holiday=d["is_holiday"],
-                nutrition_flags=d["nutrition_flags"],
-            ) for d in days]
+            year=monthly.year,
+            month=monthly.month,
+            days=[
+                MenuDayInfo(
+                    id=str(d.id),
+                    date=d.date,  # date (strawberry soporta date)
+                    breakfast=d.breakfast or "",
+                    lunch=d.lunch or "",
+                    dinner=d.dinner or "",
+                    is_holiday=getattr(d, "is_holiday", False),
+                    nutrition_flags=getattr(d, "nutrition_flags", {})
+                )
+                for d in days
+            ],
         )
 
     @strawberry.field

@@ -28,29 +28,33 @@ class MenuMutations:
         user = info.context["current_user"]
         if not user:
             raise AuthenticationException("Debes estar autenticado")
-        if user.role not in (UserRole.NUTRICIONISTA, UserRole.ADMIN):
+        if user.role not in (UserRole.NUTRITIONIST, UserRole.ADMIN):
             raise AuthorizationException("No autorizado")
 
-        file_bytes = base64.b64decode(input.file_base64.encode("utf-8"))
         result = await UploadMonthlyMenuUseCase(
             info.context["monthly_menu_repository"],
-            info.context["menu_day_repository"]
-        ).execute(UploadMonthlyMenuCommand(
-            user_id=user.id,
-            filename=input.filename,
-            file_bytes=file_bytes,
+            info.context["menu_day_repository"],
+            info.context.get("holiday_service"),
+            info.context.get("nutrition_validator"),
+        ).execute(
             year=input.year,
-            month=input.month
-        ))
+            month=input.month,
+            filename=input.filename,
+            file_base64=input.file_base64,
+        )
 
-        return UploadMenuResponse(status=result.status, message=result.message, preview=result.preview_days)
+        return UploadMenuResponse(
+            status=result.get("status", "error"),
+            message=result.get("message", ""),
+            preview=result.get("preview_days", []),
+        )
 
     @strawberry.mutation
     async def confirm_overwrite_menu(self, info, input: UploadMonthlyMenuInput) -> ConfirmOverwriteResponse:
         user = info.context["current_user"]
         if not user:
             raise AuthenticationException("Debes estar autenticado")
-        if user.role not in (UserRole.NUTRICIONISTA, UserRole.ADMIN):
+        if user.role not in (UserRole.NUTRITIONIST, UserRole.ADMIN):
             raise AuthorizationException("No autorizado")
 
         file_bytes = base64.b64decode(input.file_base64.encode("utf-8"))
@@ -72,7 +76,7 @@ class MenuMutations:
         user = info.context["current_user"]
         if not user:
             raise AuthenticationException("Debes estar autenticado")
-        if user.role not in (UserRole.NUTRICIONISTA, UserRole.ADMIN):
+        if user.role not in (UserRole.NUTRITIONIST, UserRole.ADMIN):
             raise AuthorizationException("No autorizado")
 
         items = [
@@ -110,7 +114,7 @@ class MenuMutations:
         user = info.context["current_user"]
         if not user:
             raise AuthenticationException("Debes estar autenticado")
-        if user.role not in (UserRole.CHEF, UserRole.ADMIN):
+        if user.role not in (UserRole.COOK, UserRole.ADMIN):
             raise AuthorizationException("No autorizado")
 
         r = await ReviewMenuChangeUseCase(
