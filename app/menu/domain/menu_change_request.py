@@ -6,7 +6,7 @@ from .menu_enums import MealType, ChangeStatus
 @dataclass
 class MenuChangeRequest:
     id: Optional[str]
-    menu_day_id: str
+    daily_menu_id: str
     day_date: date
     meal_type: MealType
     old_value: str

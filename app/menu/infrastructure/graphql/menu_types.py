@@ -44,7 +44,6 @@ class ConfirmOverwriteResponse:
     message: str
     preview: strawberry.scalars.JSON
 
-
 @strawberry.type
 class ExportedFile:
     status: str

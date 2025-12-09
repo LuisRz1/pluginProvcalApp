@@ -1,79 +1,132 @@
 import strawberry
 from typing import List, Optional
-from datetime import date
-from app.menu.application.use_cases.get_monthly_menu import GetMonthlyMenuUseCase, GetMonthlyMenuQuery
-from app.menu.application.use_cases.get_menu_change_history import GetMenuChangeHistoryUseCase, GetMenuChangeHistoryQuery
-from .menu_types import MonthlyMenuCalendar, MenuDayInfo, MenuChangeInfo, ExportedFile
-from ...application.use_cases.export_monthly_menu import ExportMonthlyMenuUseCase
+from datetime import date, datetime
 
-def _require_auth(info):
+from app.menu.application.use_cases.get_monthly_menu import (
+    GetMonthlyMenuUseCase,
+    GetMonthlyMenuQuery,
+)
+from app.menu.application.use_cases.get_menu_change_history import (
+    GetMenuChangeHistoryUseCase,
+    GetMenuChangeHistoryQuery,
+)
+from app.menu.application.use_cases.export_monthly_menu import ExportMonthlyMenuUseCase
+from .menu_types import MonthlyMenuCalendar, MenuDayInfo, MenuChangeInfo, ExportedFile
+
+
+def _require_auth(info) -> None:
     if not info.context.get("current_user"):
         raise Exception("No autenticado")
+
+
+def _parse_date(value: Optional[str]) -> Optional[date]:
+    if not value:
+        return None
+    return date.fromisoformat(value)
+
+
+def _parse_datetime(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    # str(c.decided_at) en el use case devuelve ISO por defecto
+    return datetime.fromisoformat(value)
+
 
 @strawberry.type
 class MenuQueries:
     @strawberry.field
     async def menu(self, info, year: int, month: int) -> Optional[MonthlyMenuCalendar]:
-        # Requiere estar autenticado
+        """
+        Devuelve el calendario mensual ya normalizado (daily_menus + meals +
+        meal_components) empaquetado en la estructura plana que usa el frontend:
+        breakfast / lunch / dinner por día.
+        """
         _require_auth(info)
 
-        monthly_repo = info.context["monthly_menu_repository"]
-        day_repo = info.context["menu_day_repository"]
+        uc = GetMonthlyMenuUseCase(
+            info.context["monthly_menu_repository"],
+            info.context["weekly_menu_repository"],
+            info.context["daily_menu_repository"],
+            info.context["meal_repository"],
+            info.context["meal_component_repository"],
+        )
+        rows = await uc.execute(GetMonthlyMenuQuery(year=year, month=month))
 
-        # 1) Buscar el menú del mes
-        monthly = await monthly_repo.find_by_year_month(year, month)
-        if not monthly:
+        if not rows:
             return None
 
-        # 2) Listar días de ese menú
-        days = await day_repo.list_by_menu(str(monthly.id))
+        days: List[MenuDayInfo] = [
+            MenuDayInfo(
+                id=row["id"],
+                date=date.fromisoformat(row["date"]),
+                breakfast=row["breakfast"],
+                lunch=row["lunch"],
+                dinner=row["dinner"],
+                is_holiday=row["is_holiday"],
+                nutrition_flags=row.get("nutrition_flags") or {},
+            )
+            for row in rows
+        ]
 
-        # 3) Mapear a tus tipos GraphQL reales (NO MonthlyMenuGQL)
-        return MonthlyMenuCalendar(
-            year=monthly.year,
-            month=monthly.month,
-            days=[
-                MenuDayInfo(
-                    id=str(d.id),
-                    date=d.date,  # date (strawberry soporta date)
-                    breakfast=d.breakfast or "",
-                    lunch=d.lunch or "",
-                    dinner=d.dinner or "",
-                    is_holiday=getattr(d, "is_holiday", False),
-                    nutrition_flags=getattr(d, "nutrition_flags", {})
-                )
-                for d in days
-            ],
-        )
+        return MonthlyMenuCalendar(year=year, month=month, days=days)
 
     @strawberry.field
-    async def menu_change_history(self, info, year: int, month: int) -> List[MenuChangeInfo]:
-        data = await GetMenuChangeHistoryUseCase(info.context["menu_change_repository"])\
-            .execute(GetMenuChangeHistoryQuery(year, month))
-        from datetime import datetime as _dt
-        def _parse(dt):
-            return _dt.fromisoformat(dt) if dt else None
+    async def menu_change_history(
+        self,
+        info,
+        year: int,
+        month: int,
+    ) -> List[MenuChangeInfo]:
+        """
+        Historial de cambios solicitados para el mes (para auditoría).
+        """
+        _require_auth(info)
+
+        uc = GetMenuChangeHistoryUseCase(info.context["menu_change_repository"])
+        data = await uc.execute(GetMenuChangeHistoryQuery(year=year, month=month))
+
         return [
             MenuChangeInfo(
                 id=x["id"],
-                date=date.fromisoformat(x["date"]),
+                date=_parse_date(x["date"]),
                 meal_type=x["meal_type"],
                 old_value=x["old_value"],
                 new_value=x["new_value"],
                 status=x["status"],
                 requested_by=x["requested_by"],
                 decided_by=x["decided_by"],
-                decided_at=_parse(x["decided_at"]),
+                decided_at=_parse_datetime(x["decided_at"]),
                 notes=x["notes"],
                 batch_id=x["batch_id"],
-            ) for x in data
+            )
+            for x in data
         ]
 
     @strawberry.field
-    async def export_monthly_menu(self, info, year: int, month: int) -> ExportedFile:
+    async def export_monthly_menu(
+        self,
+        info,
+        year: int,
+        month: int,
+    ) -> ExportedFile:
+        """
+        Exporta el menú mensual a un archivo (base64) usando el mismo formato
+        plano que el Excel.
+        """
+        _require_auth(info)
+
         uc = ExportMonthlyMenuUseCase(
             info.context["monthly_menu_repository"],
-            info.context["menu_day_repository"],
+            info.context["weekly_menu_repository"],
+            info.context["daily_menu_repository"],
+            info.context["meal_repository"],
+            info.context["meal_component_repository"],
         )
         res = await uc.execute(year, month)
-        return ExportedFile(**res)
+
+        return ExportedFile(
+            status=res.get("status", "error"),
+            filename=res.get("filename"),
+            content_base64=res.get("content_base64"),
+            message=res.get("message"),
+        )

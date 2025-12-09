@@ -24,10 +24,14 @@ from app.attendance.infrastructure.persistence.work_schedule_repository_impl imp
 from app.attendance.infrastructure.services.simple_holiday_service import SimpleHolidayService
 
 # MENU
-from app.menu.application.services.nutrition_validator import SimpleNutritionValidator
 from app.menu.infrastructure.persistence.monthly_menu_repository_impl import PostgreSQLMonthlyMenuRepository
-from app.menu.infrastructure.persistence.menu_day_repository_impl import PostgreSQLMenuDayRepository
+from app.menu.infrastructure.persistence.weekly_menu_repository_impl import PostgreSQLWeeklyMenuRepository
+from app.menu.infrastructure.persistence.daily_menu_repository_impl import PostgreSQLDailyMenuRepository
+from app.menu.infrastructure.persistence.meal_repository_impl import PostgreSQLMealRepository
+from app.menu.infrastructure.persistence.meal_component_repository_impl import PostgreSQLMealComponentRepository
 from app.menu.infrastructure.persistence.menu_change_repository_impl import PostgreSQLMenuChangeRepository
+from app.menu.infrastructure.persistence.component_type_repository_impl import PostgreSQLComponentTypeRepository
+
 
 # REQUESTS (NO importes el repo de horarios aquí)
 from app.requests.infrastructure.persistence.time_off_request_repository_impl import PostgreSQLTimeOffRequestRepository
@@ -81,10 +85,15 @@ async def get_context(request: Request) -> dict:
         time_off_repo = PostgreSQLTimeOffRequestRepository(session)
         vacation_balance_repo = PostgreSQLVacationBalanceRepository(session)
         swap_repo = PostgreSQLShiftSwapRepository(session)
+
+        # Menú normalizado (monthly -> weekly -> daily -> meals -> components)
         monthly_menu_repo = PostgreSQLMonthlyMenuRepository(session)
-        menu_day_repo = PostgreSQLMenuDayRepository(session)
+        weekly_menu_repo = PostgreSQLWeeklyMenuRepository(session)
+        daily_menu_repo = PostgreSQLDailyMenuRepository(session)
+        meal_repo = PostgreSQLMealRepository(session)
+        meal_component_repo = PostgreSQLMealComponentRepository(session)
         menu_change_repo = PostgreSQLMenuChangeRepository(session)
-        nutrition_validator = SimpleNutritionValidator()
+        component_type_repo = PostgreSQLComponentTypeRepository(session)
 
         email_service = SMTPEmailService(
             smtp_host=settings.SMTP_HOST,
@@ -138,9 +147,12 @@ async def get_context(request: Request) -> dict:
 
             # Menú
             "monthly_menu_repository": monthly_menu_repo,
-            "menu_day_repository": menu_day_repo,
+            "weekly_menu_repository": weekly_menu_repo,
+            "daily_menu_repository": daily_menu_repo,
+            "meal_repository": meal_repo,
+            "meal_component_repository": meal_component_repo,
             "menu_change_repository": menu_change_repo,
-            "nutrition_validator": nutrition_validator,
+            "component_type_repository": component_type_repo,
 
             "current_user": current_user,
         }

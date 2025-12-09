@@ -19,7 +19,7 @@ class MenuChangeModel(Base):
     __tablename__ = "menu_change_requests"
 
     id = Column(PG_UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    menu_day_id = Column(PG_UUID(as_uuid=True), nullable=False, index=True)
+    daily_menu_id = Column(PG_UUID(as_uuid=True), nullable=False, index=True)
     day_date = Column(Date, nullable=False, index=True)
     meal_type = Column(String(20), nullable=False)
     old_value = Column(String(255), nullable=False, default="")
@@ -44,7 +44,7 @@ class PostgreSQLMenuChangeRepository(MenuChangeRepository):
     def _to_domain(self, m: MenuChangeModel) -> MenuChangeRequest:
         return MenuChangeRequest(
             id=str(m.id),
-            menu_day_id=str(m.menu_day_id),
+            daily_menu_id=str(m.daily_menu_id),
             day_date=m.day_date,
             meal_type=MealType(m.meal_type),
             old_value=m.old_value,
@@ -74,7 +74,7 @@ class PostgreSQLMenuChangeRepository(MenuChangeRepository):
             return self._to_domain(m)
 
         m = MenuChangeModel(
-            menu_day_id=uuid.UUID(req.menu_day_id),
+            daily_menu_id=uuid.UUID(req.daily_menu_id),
             day_date=req.day_date,
             meal_type=req.meal_type.value,
             old_value=req.old_value,
