@@ -41,6 +41,21 @@ from app.requests.infrastructure.persistence.work_schedule_repository_impl impor
     PostgreSQLWorkScheduleRepository as RequestsWorkScheduleRepository
 )
 
+# SANITARY (nuevo)
+from app.sanitary.infrastructure.persistence.sanitary_policy_repository_impl import (
+    PostgreSQLSanitaryPolicyRepository,
+)
+from app.sanitary.infrastructure.persistence.incident_type_repository_impl import (
+    PostgreSQLIncidentTypeRepository,
+)
+from app.sanitary.infrastructure.persistence.sanitary_review_repository_impl import (
+    PostgreSQLSanitaryReviewRepository,
+)
+from app.sanitary.infrastructure.persistence.sanitary_company_repository_impl import (
+    PostgreSQLSanitaryCompanyRepository,
+)
+
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -94,6 +109,12 @@ async def get_context(request: Request) -> dict:
         meal_component_repo = PostgreSQLMealComponentRepository(session)
         menu_change_repo = PostgreSQLMenuChangeRepository(session)
         component_type_repo = PostgreSQLComponentTypeRepository(session)
+
+        # Sanidad (módulo de políticas, incidencias y revisiones)
+        sanitary_policy_repo = PostgreSQLSanitaryPolicyRepository(session)
+        incident_type_repo = PostgreSQLIncidentTypeRepository(session)
+        sanitary_review_repo = PostgreSQLSanitaryReviewRepository(session)
+        sanitary_company_repo = PostgreSQLSanitaryCompanyRepository(session)
 
         email_service = SMTPEmailService(
             smtp_host=settings.SMTP_HOST,
@@ -153,6 +174,12 @@ async def get_context(request: Request) -> dict:
             "meal_component_repository": meal_component_repo,
             "menu_change_repository": menu_change_repo,
             "component_type_repository": component_type_repo,
+
+            # Sanidad
+            "sanitary_policy_repository": sanitary_policy_repo,
+            "incident_type_repository": incident_type_repo,
+            "sanitary_review_repository": sanitary_review_repo,
+            "sanitary_company_repository": sanitary_company_repo,
 
             "current_user": current_user,
         }
