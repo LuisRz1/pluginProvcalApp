@@ -87,30 +87,43 @@ class PostgreSQLComponentTypeRepository(ComponentTypeRepository):
 
     async def create(self, component_type: ComponentType) -> ComponentType:
         """
-        Crea un nuevo tipo de componente. Si no tiene display_order (>0),
-        se asigna automáticamente como max(display_order) + 1.
+        Crea un nuevo tipo de componente y hace COMMIT
+        para que pueda ser referenciado por meal_components.
         """
-        # Resolver id
-        if component_type.id:
-            cid = uuid.UUID(str(component_type.id))
-        else:
-            cid = uuid.uuid4()
-            component_type.id = str(cid)
 
-        # Resolver display_order
-        if not component_type.display_order or component_type.display_order <= 0:
+        # 1. Calcular display_order si no viene
+        if component_type.display_order is None:
             stmt = select(sa.func.max(ComponentTypeModel.display_order))
             result = await self._session.execute(stmt)
             max_order = result.scalar() or 0
             component_type.display_order = max_order + 1
 
+        # 2. Resolver el UUID que vamos a guardar
+        if component_type.id is None:
+            new_id = uuid.uuid4()
+        else:
+            # si viniera como string, lo convertimos
+            new_id = (
+                component_type.id
+                if isinstance(component_type.id, uuid.UUID)
+                else uuid.UUID(str(component_type.id))
+            )
+
+        # 3. Insertar y COMMIT
         model = ComponentTypeModel(
-            id=cid,
+            id=new_id,
             component_name=component_type.name,
             display_order=component_type.display_order,
         )
+
         self._session.add(model)
-        # No hacemos commit aquí; lo controla el servicio/use case
-        await self._session.flush()
+        await self._session.commit()
+        await self._session.refresh(model)
+
+        # 4. Sincronizar dominio (como string)
+        component_type.id = str(model.id)
+        component_type.display_order = model.display_order
 
         return component_type
+
+

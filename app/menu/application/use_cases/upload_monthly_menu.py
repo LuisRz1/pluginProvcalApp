@@ -1,6 +1,7 @@
 import base64
 import io
 import unicodedata
+from uuid import uuid4
 from dataclasses import dataclass
 from datetime import date, datetime
 from typing import List, Dict, Any, Tuple, Optional
@@ -120,24 +121,35 @@ class UploadMonthlyMenuUseCase:
         except ValueError:
             return None
 
-    async def _get_or_create_component_type(self, label: str) -> ComponentType:
-        name = (label or "").strip()
-        if not name:
-            name = "GENÉRICO"
+    async def _get_or_create_component_type(self, raw_label: str) -> ComponentType:
+        """
+        Devuelve o crea un tipo de componente.
+        Aseguramos que NUNCA retorne un id inexistente.
+        Limpieza automática de valores inválidos del Excel ("----", "##", etc.)
+        """
+        label = (raw_label or "").strip()
 
-        cached = self._component_type_cache.get(name)
+        # Normalización fuerte
+        invalid = {"", "-", "----", "-----", "###", "##", "XXX"}
+        if label.upper() in invalid:
+            label = "GENÉRICO"
+
+        # Cache (evita db roundtrips)
+        cached = self._component_type_cache.get(label)
         if cached:
             return cached
 
-        existing = await self.component_type_repo.get_by_name(name)
+        # Buscar en BD
+        existing = await self.component_type_repo.get_by_name(label)
         if existing:
-            self._component_type_cache[name] = existing
+            self._component_type_cache[label] = existing
             return existing
 
-        # display_order = 0 -> se resuelve en el repositorio
-        new_ct = ComponentType(id=None, name=name, display_order=0)
+        # Crear nuevo
+        new_ct = ComponentType(id=None, name=label, display_order=0)
         created = await self.component_type_repo.create(new_ct)
-        self._component_type_cache[name] = created
+
+        self._component_type_cache[label] = created
         return created
 
     # =========================
@@ -158,58 +170,52 @@ class UploadMonthlyMenuUseCase:
                 return row
         return None
 
-    def _extract_days_from_sheet(self, ws) -> List[Tuple[date, str, int, int]]:
+    def _extract_days_from_sheet(self, ws):
         """
-        Devuelve una lista de:
-        (fecha, nombre_dia, col_nombre_plato, col_kcal)
+        Lee correctamente días y fechas incluso con celdas combinadas.
+        """
+        result = []
 
-        Cada día ocupa 2 columnas (nombre del plato, kcal).
-        """
-        result: List[Tuple[date, str, int, int]] = []
         day_row = self._find_day_header_row(ws)
         if not day_row:
             return result
+
         date_row = day_row + 1
 
         col = 1
         while col <= ws.max_column:
-            raw_day = ws.cell(row=day_row, column=col).value
-            norm_day = self._normalize_str(raw_day)
-            if norm_day in DAY_NAMES:
-                # la fecha está debajo, en la misma columna (normalmente mergeado hacia la izquierda)
-                raw_date = ws.cell(row=date_row, column=col).value
+            raw_day = ws.cell(day_row, col).value
+            norm = self._normalize_str(raw_day)
+
+            if norm in DAY_NAMES:
+                # Corrección: búsqueda real del merge
+                raw_date = ws.cell(date_row, col).value
+                if raw_date is None:
+                    # Buscar hacia la IZQUIERDA dentro del merge
+                    cc = col
+                    while cc > 1 and raw_date is None:
+                        cc -= 1
+                        raw_date = ws.cell(date_row, cc).value
+
                 if not raw_date:
                     col += 2
                     continue
 
-                # soportar date de Excel o texto tipo 30/06/2025
+                # parseo seguro
                 if isinstance(raw_date, datetime):
                     d = raw_date.date()
                 elif isinstance(raw_date, date):
                     d = raw_date
                 else:
-                    text = str(raw_date).strip()
-                    parsed: Optional[date] = None
-                    for fmt in ("%d/%m/%Y", "%Y-%m-%d", "%d-%m-%Y", "%d/%m/%y", "%d-%m-%y"):
-                        try:
-                            parsed = datetime.strptime(text, fmt).date()
-                            break
-                        except ValueError:
-                            continue
-                    if not parsed:
-                        col += 2
-                        continue
-                    d = parsed
+                    d = datetime.strptime(str(raw_date), "%d/%m/%Y").date()
 
-                name_col = col
-                kcal_col = col + 1
-                # usamos el texto original como nombre de día para mostrar
-                result.append((d, str(raw_day).strip(), name_col, kcal_col))
+                result.append((d, str(raw_day).strip(), col, col + 1))
                 col += 2
             else:
                 col += 1
 
         return result
+
 
     def _find_blocks(self, ws) -> Dict[str, Tuple[int, int]]:
         """
@@ -305,7 +311,7 @@ class UploadMonthlyMenuUseCase:
         monthly = await self.monthly_repo.find_by_year_month(cmd.year, cmd.month)
         if not monthly:
             monthly = MonthlyMenu(
-                id=None,
+                id=str(uuid4()),
                 year=cmd.year,
                 month=cmd.month,
                 status=MenuStatus.DRAFT,

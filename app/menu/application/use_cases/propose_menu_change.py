@@ -91,10 +91,10 @@ class ProposeMenuChangeUseCase:
                             MealComponent(
                                 id=None,
                                 meal_id=str(meal.id),
-                                component_type_id=GENERIC_COMPONENT_TYPE_ID,
+                                component_type_id=GENERIC_COMPONENT_TYPE_ID,  # seguro
                                 dish_name=item.new_value,
                                 calories=None,
-                                order_position=0,
+                                order_position=1,
                             )
                         ],
                     )

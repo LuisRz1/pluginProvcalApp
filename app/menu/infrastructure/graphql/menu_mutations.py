@@ -63,11 +63,12 @@ class MenuMutations:
         _require_role(user, [UserRole.NUTRITIONIST, UserRole.ADMIN])
 
         uc = UploadMonthlyMenuUseCase(
-            info.context["monthly_menu_repository"],
-            info.context["weekly_menu_repository"],
-            info.context["daily_menu_repository"],
-            info.context["meal_repository"],
-            info.context["meal_component_repository"],
+            monthly_repo=info.context["monthly_menu_repository"],
+            weekly_repo=info.context["weekly_menu_repository"],
+            daily_repo=info.context["daily_menu_repository"],
+            meal_repo=info.context["meal_repository"],
+            meal_component_repo=info.context["meal_component_repository"],
+            component_type_repo=info.context["component_type_repository"],
         )
 
         result = await uc.execute(
