@@ -9,8 +9,8 @@ class CheckInInput:
     longitude: float
     accuracy: float = 10.0
     # Estos valores deberían venir de configuración del usuario/empresa
-    workplace_latitude: float = -8.1116778
-    workplace_longitude: float = -79.0287578
+    workplace_latitude: float = -8.136884
+    workplace_longitude: float = -79.054332
     workplace_radius_meters: float = 100.0
 
 @strawberry.input
